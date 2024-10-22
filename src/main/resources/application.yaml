@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /sona-booking.com
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/hotel_booking_db
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
