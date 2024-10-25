@@ -32,15 +32,13 @@ public class Customer {
   String firstName;
   @Column(nullable = false)
   String lastName;
-  @Column(nullable = false)
-  String address;
   @Column(nullable = false, unique = true)
   String phoneNumber;
+  String cccd;
   @Column(nullable = false)
   boolean gender;
   @Column(nullable = false)
   LocalDate dob;
-  LocalDate createdAt;
   LocalDate updatedAt;
 
   @OneToOne(fetch = FetchType.LAZY)
