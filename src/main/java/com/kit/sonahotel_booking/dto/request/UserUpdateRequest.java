@@ -1,6 +1,8 @@
 package com.kit.sonahotel_booking.dto.request;
 
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,5 +20,7 @@ public class UserUpdateRequest extends GeneralDtoRequest {
   String address;
   String avatar;
   String cccd;
-
+  BigDecimal salary;
+  LocalDate dob;
+  boolean gender;
 }
