@@ -22,7 +22,13 @@ public enum ErrorCode {
   PERMISSION_EXIST(-12, "Permission already exists", HttpStatus.FOUND),
   PERMISSION_NOT_FOUND(-13, "Permission not found", HttpStatus.NOT_FOUND),
   ROLE_EXIST(-14, "Role already exists", HttpStatus.FOUND),
-  PHONE_NUMBER_ALREADY_EXISTS(-15, "Phone number already exists", HttpStatus.FOUND),;
+  PHONE_NUMBER_ALREADY_EXISTS(-15, "Phone number already exists", HttpStatus.FOUND),
+  BED_TYPE_EXIST(-16, "Bed type already exists", HttpStatus.FOUND),
+  BED_TYPE_NOT_FOUND(-17, "Bed type not found", HttpStatus.NOT_FOUND),
+  ROOM_TYPE_EXIST(-18, "Room type already exists", HttpStatus.FOUND),
+  ROOM_TYPE_NOT_FOUND(-19, "Room type not found", HttpStatus.NOT_FOUND),
+  ROOM_CLASS_EXIST(-20, "Room class already exists", HttpStatus.FOUND),
+  ROOM_CLASS_NOT_FOUND(-21, "Room class not found", HttpStatus.NOT_FOUND),;
 
   private int code;
   private String message;

@@ -22,8 +22,7 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-    httpSecurity.authorizeHttpRequests(
-        authorized -> authorized.anyRequest().permitAll());
+    httpSecurity.authorizeHttpRequests(authorized -> authorized.anyRequest().permitAll());
     httpSecurity.csrf(AbstractHttpConfigurer::disable);
     return httpSecurity.build();
   }
