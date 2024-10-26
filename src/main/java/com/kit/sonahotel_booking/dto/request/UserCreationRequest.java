@@ -21,6 +21,9 @@ public class UserCreationRequest extends GeneralDtoRequest {
   String lastName;
   @Size(min = 10, max = 11, message = "SIZE_PHONE")
   String phoneNumber;
+  @Size(min = 12, max = 12, message = "SIZE_CCCD")
+  String cccd;
   boolean gender;
   LocalDate dob;
+  LocalDate hireDate;
 }
