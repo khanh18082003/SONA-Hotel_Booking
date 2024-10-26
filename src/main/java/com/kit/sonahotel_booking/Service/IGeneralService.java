@@ -1,6 +1,8 @@
 package com.kit.sonahotel_booking.Service;
 
 import com.kit.sonahotel_booking.dto.request.GeneralDtoRequest;
+import com.kit.sonahotel_booking.dto.response.RoomTypeResponse;
+
 import java.util.List;
 
 public interface IGeneralService<T, E> {

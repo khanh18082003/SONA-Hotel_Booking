@@ -15,21 +15,36 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
   private final String[] PUBLIC_ENDPOINTS = {
-      "/api/customer/login",
-      "/api/customer/register",
-      "/api/customer/verify",
-      "/api/customer/logout",
+          "/api/customer/login",
+          "/api/customer/register",
+          "/api/customer/verify",
+          "/api/customer/logout",
+          "/api/bedtype/**"  // Allows access to deeper paths like /api/bedtype/update/{id}
   };
 
-  @Bean
+/*  @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
     httpSecurity.authorizeHttpRequests(
-        authorized -> authorized.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+        authorized -> authorized.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
+                .permitAll()
+                .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS)
+                .permitAll()
             .anyRequest()
             .authenticated());
     httpSecurity.csrf(AbstractHttpConfigurer::disable);
     return httpSecurity.build();
+  }*/
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity
+            .authorizeHttpRequests(authorize -> authorize
+                    .anyRequest().permitAll()  // Allows all requests
+            );
+    httpSecurity.csrf(AbstractHttpConfigurer::disable); // Optionally disable CSRF for easier testing (not recommended in production)
+
+    return httpSecurity.build();
   }
+
 
   @Bean
   PasswordEncoder passwordEncoder() {
