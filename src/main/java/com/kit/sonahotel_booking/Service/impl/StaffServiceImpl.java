@@ -94,7 +94,7 @@ public class StaffServiceImpl implements IStaffService {
 
   @Override
   public UserResponse get(String userId) {
-    Staff staff = staffRepository.findById(userId)
+    Staff staff = staffRepository.findByAccountId(userId)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
     userResponse.setAccountId(staff.getAccount().getAccountId());
@@ -107,7 +107,17 @@ public class StaffServiceImpl implements IStaffService {
 
   @Override
   public List<UserResponse> getAll() {
-    return staffRepository.findAll().stream().map(userMapper::fromStafftoUserResponse).toList();
+    return staffRepository.findAll().stream().map(
+        staff -> {
+          UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
+          userResponse.setAccountId(staff.getAccount().getAccountId());
+          userResponse.setCreatedAt(staff.getAccount().getCreatedAt());
+          userResponse.setEmail(staff.getAccount().getEmail());
+          userResponse.setStatus(staff.getAccount().isActivated());
+          userResponse.setRoles(staff.getAccount().getRoles());
+          return userResponse;
+        }
+    ).toList();
   }
 
 }

@@ -92,8 +92,8 @@ public class CustomerServiceImpl implements ICustomerService {
   }
 
   @Override
-  public UserResponse get(String userId) {
-    Customer customer = customerRepository.findById(userId)
+  public UserResponse get(String accountId) {
+    Customer customer = customerRepository.findByAccountId(accountId)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
     userResponse.setAccountId(customer.getAccount().getAccountId());
@@ -106,7 +106,16 @@ public class CustomerServiceImpl implements ICustomerService {
 
   @Override
   public List<UserResponse> getAll() {
-    return customerRepository.findAll().stream().map(userMapper::fromCustomertoUserResponse)
-        .toList();
+    return customerRepository.findAll().stream().map(
+        customer -> {
+          UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
+          userResponse.setAccountId(customer.getAccount().getAccountId());
+          userResponse.setEmail(customer.getAccount().getEmail());
+          userResponse.setStatus(customer.getAccount().isActivated());
+          userResponse.setCreatedAt(customer.getAccount().getCreatedAt());
+          userResponse.setRoles(customer.getAccount().getRoles());
+          return userResponse;
+        }
+    ).toList();
   }
 }
