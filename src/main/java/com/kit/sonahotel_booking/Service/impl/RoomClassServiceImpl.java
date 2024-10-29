@@ -10,11 +10,14 @@ import com.kit.sonahotel_booking.Repository.RoomTypeRepository;
 import com.kit.sonahotel_booking.Service.IRoomClassService;
 import com.kit.sonahotel_booking.dto.request.GeneralDtoRequest;
 import com.kit.sonahotel_booking.dto.request.RoomClassRequest;
+import com.kit.sonahotel_booking.dto.request.SearchRequest;
 import com.kit.sonahotel_booking.dto.response.RoomClassResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,5 +42,10 @@ public class RoomClassServiceImpl implements IRoomClassService {
         }
         RoomClass roomClass= roomClassMapper.toRoomClass(roomClassRequest);
         return roomClassMapper.toRoomClassResponse(roomClassRepository.save(roomClass));
+    }
+
+    @Override
+    public List<RoomClassResponse> getAll() {
+        return IRoomClassService.super.getAll();
     }
 }
