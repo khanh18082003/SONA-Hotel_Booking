@@ -19,9 +19,13 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +42,7 @@ public class CustomerServiceImpl implements ICustomerService {
   AccountMapper accountMapper;
   RoleRepository roleRepository;
 
+  @Override
   public UserResponse save(GeneralDtoRequest request) {
     UserCreationRequest userCreationRequest = (UserCreationRequest) request;
     if (accountRepository.existsByEmail(userCreationRequest.getEmail())) {
@@ -67,6 +72,8 @@ public class CustomerServiceImpl implements ICustomerService {
     return userResponse;
   }
 
+  @PostAuthorize("returnObject.email == authentication.name")
+  @Override
   public UserResponse update(GeneralDtoRequest request, String accountId) {
     UserUpdateRequest userUpdateRequest = (UserUpdateRequest) request;
 
@@ -83,6 +90,7 @@ public class CustomerServiceImpl implements ICustomerService {
     return userResponse;
   }
 
+  @PostAuthorize("returnObject.email == authentication.name")
   @Override
   public void delete(String accountId) {
     Customer customer = customerRepository.findByAccountId(accountId)
@@ -91,9 +99,10 @@ public class CustomerServiceImpl implements ICustomerService {
     account.setActivated(false);
   }
 
+  @PostAuthorize("hasRole('ADMIN') or returnObject.email == authentication.name")
   @Override
-  public UserResponse get(String userId) {
-    Customer customer = customerRepository.findById(userId)
+  public UserResponse get(String accountId) {
+    Customer customer = customerRepository.findByAccountId(accountId)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
     userResponse.setAccountId(customer.getAccount().getAccountId());
@@ -104,9 +113,42 @@ public class CustomerServiceImpl implements ICustomerService {
     return userResponse;
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @Override
   public List<UserResponse> getAll() {
-    return customerRepository.findAll().stream().map(userMapper::fromCustomertoUserResponse)
-        .toList();
+    return customerRepository.findAll().stream().map(
+        customer -> {
+          UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
+          userResponse.setAccountId(customer.getAccount().getAccountId());
+          userResponse.setEmail(customer.getAccount().getEmail());
+          userResponse.setStatus(customer.getAccount().isActivated());
+          userResponse.setCreatedAt(customer.getAccount().getCreatedAt());
+          userResponse.setRoles(customer.getAccount().getRoles());
+          return userResponse;
+        }
+    ).toList();
+  }
+
+  @Override
+  public UserResponse getMyInfo() {
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (Objects.isNull(authentication)) {
+      return null;
+    }
+    String name = authentication.getName();
+    Account account = accountRepository.findByEmail(name)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+    Customer customer = customerRepository.findByAccountId(account.getAccountId())
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+    UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
+    userResponse.setAccountId(customer.getAccount().getAccountId());
+    userResponse.setEmail(customer.getAccount().getEmail());
+    userResponse.setStatus(customer.getAccount().isActivated());
+    userResponse.setRoles(customer.getAccount().getRoles());
+    userResponse.setCreatedAt(customer.getAccount().getCreatedAt());
+
+    return userResponse;
   }
 }
