@@ -7,6 +7,7 @@ import com.kit.sonahotel_booking.dto.request.UserCreationRequest;
 import com.kit.sonahotel_booking.dto.request.UserUpdateRequest;
 import com.kit.sonahotel_booking.dto.response.UserResponse;
 import com.kit.sonahotel_booking.dto.response.ApiResponse;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,7 +28,7 @@ public class CustomerController {
   ICustomerService customerService;
 
   @PostMapping("/register")
-  ApiResponse<UserResponse> register(@RequestBody UserCreationRequest request) {
+  ApiResponse<UserResponse> register(@Valid @RequestBody UserCreationRequest request) {
     UserResponse registerResponse = customerService.save(request);
     return ApiResponse.<UserResponse>builder()
         .code(1005)
@@ -37,7 +38,7 @@ public class CustomerController {
   }
 
   @PutMapping("/update/{id}")
-  ApiResponse<UserResponse> updateCustomer(@RequestBody UserUpdateRequest request, @PathVariable String id) {
+  ApiResponse<UserResponse> updateCustomer(@Valid @RequestBody UserUpdateRequest request, @PathVariable String id) {
     UserResponse updateResponse = customerService.update(request, id);
     return ApiResponse.<UserResponse>builder()
         .code(1006)
@@ -72,6 +73,16 @@ public class CustomerController {
         .code(1009)
         .data(customers)
         .message("All accounts retrieved successfully")
+        .build();
+  }
+
+  @GetMapping("/profile")
+  ApiResponse<UserResponse> getProfile() {
+    UserResponse customer = customerService.getMyInfo();
+    return ApiResponse.<UserResponse>builder()
+        .code(1010)
+        .data(customer)
+        .message("Profile retrieved successfully")
         .build();
   }
 }

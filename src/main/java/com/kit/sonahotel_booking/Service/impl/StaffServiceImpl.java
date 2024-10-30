@@ -22,6 +22,9 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +41,7 @@ public class StaffServiceImpl implements IStaffService {
   UserMapper userMapper;
   RoleRepository roleRepository;
 
+  @Override
   public UserResponse save(GeneralDtoRequest request) {
     UserCreationRequest userCreationRequest = (UserCreationRequest) request;
     if (accountRepository.existsByEmail(userCreationRequest.getEmail())) {
@@ -67,6 +71,8 @@ public class StaffServiceImpl implements IStaffService {
     return userResponse;
   }
 
+  @PostAuthorize("returnObject.email == authentication.name")
+  @Override
   public UserResponse update(GeneralDtoRequest request, String accountId) {
     UserUpdateRequest userUpdateRequest = (UserUpdateRequest) request;
 
@@ -92,6 +98,7 @@ public class StaffServiceImpl implements IStaffService {
     account.setActivated(false);
   }
 
+  @PostAuthorize("hasRole('ADMIN') or returnObject.email == authentication.name")
   @Override
   public UserResponse get(String userId) {
     Staff staff = staffRepository.findByAccountId(userId)
@@ -105,6 +112,7 @@ public class StaffServiceImpl implements IStaffService {
     return userResponse;
   }
 
+  @PreAuthorize("hasRole('ADMIN')")
   @Override
   public List<UserResponse> getAll() {
     return staffRepository.findAll().stream().map(
@@ -120,4 +128,23 @@ public class StaffServiceImpl implements IStaffService {
     ).toList();
   }
 
+  @Override
+  public UserResponse getMyInfo() {
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    String email = authentication.getName();
+    Account account = accountRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+    Staff staff = staffRepository.findByAccountId(account.getAccountId())
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+    UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
+    userResponse.setAccountId(staff.getAccount().getAccountId());
+    userResponse.setCreatedAt(staff.getAccount().getCreatedAt());
+    userResponse.setEmail(staff.getAccount().getEmail());
+    userResponse.setStatus(staff.getAccount().isActivated());
+    userResponse.setRoles(staff.getAccount().getRoles());
+
+    return userResponse;
+  }
 }

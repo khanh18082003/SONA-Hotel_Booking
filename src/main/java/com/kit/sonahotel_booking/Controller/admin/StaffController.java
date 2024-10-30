@@ -7,8 +7,11 @@ import com.kit.sonahotel_booking.dto.request.UserCreationRequest;
 import com.kit.sonahotel_booking.dto.request.UserUpdateRequest;
 import com.kit.sonahotel_booking.dto.response.ApiResponse;
 import com.kit.sonahotel_booking.dto.response.UserResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,12 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/staff")
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Slf4j
 public class StaffController {
 
   IStaffService staffService;
 
   @PostMapping("/register")
-  ApiResponse<UserResponse> register(@RequestBody UserCreationRequest request) {
+  ApiResponse<UserResponse> register(@Valid @RequestBody UserCreationRequest request) {
     UserResponse registerResponse = staffService.save(request);
     return ApiResponse.<UserResponse>builder()
         .code(1005)
@@ -37,7 +41,7 @@ public class StaffController {
   }
 
   @PutMapping("/update/{id}")
-  ApiResponse<UserResponse> updateStaff(@RequestBody UserUpdateRequest request,
+  ApiResponse<UserResponse> updateStaff(@Valid @RequestBody UserUpdateRequest request,
       @PathVariable String id) {
     UserResponse updateResponse = staffService.update(request, id);
     return ApiResponse.<UserResponse>builder()
@@ -72,6 +76,16 @@ public class StaffController {
         .code(1009)
         .data(staffService.getAll())
         .message("Accounts retrieved successfully")
+        .build();
+  }
+
+  @GetMapping("/profile")
+  ApiResponse<UserResponse> getProfile() {
+    UserResponse staff = staffService.getMyInfo();
+    return ApiResponse.<UserResponse>builder()
+        .code(1010)
+        .data(staff)
+        .message("Profile retrieved successfully")
         .build();
   }
 }

@@ -19,6 +19,7 @@ public class UserUpdateRequest extends GeneralDtoRequest {
   String phoneNumber;
   String address;
   String avatar;
+  @Size(min= 12, max = 12, message = "SIZE_CCCD")
   String cccd;
   BigDecimal salary;
   LocalDate dob;
