@@ -12,9 +12,11 @@ import com.kit.sonahotel_booking.dto.request.GeneralDtoRequest;
 import com.kit.sonahotel_booking.dto.request.RoomClassRequest;
 import com.kit.sonahotel_booking.dto.request.SearchRequest;
 import com.kit.sonahotel_booking.dto.response.RoomClassResponse;
+import com.kit.sonahotel_booking.dto.response.SearchResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,7 +29,6 @@ public class RoomClassServiceImpl implements IRoomClassService {
     RoomClassMapper roomClassMapper;
     BedTypeRepository bedTypeRepository;
     RoomTypeRepository roomTypeRepository;
-
     @Override
     public RoomClassResponse save(GeneralDtoRequest request){
         RoomClassRequest roomClassRequest = (RoomClassRequest) request;
@@ -45,7 +46,19 @@ public class RoomClassServiceImpl implements IRoomClassService {
     }
 
     @Override
+    public RoomClassResponse get(Integer integer) {
+        RoomClass roomClass = roomClassRepository.findById(integer)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_CLASS_NOT_FOUND));
+        return roomClassMapper.toRoomClassResponse(roomClass);
+    }
+
+    @Override
     public List<RoomClassResponse> getAll() {
         return IRoomClassService.super.getAll();
+    }
+
+    @Override
+    public List<SearchResponse> searchroom(SearchRequest request) {
+        return roomClassRepository.searchRoom(request.getFromDate(),request.getToDate(),request.getBedName(), request.getBedName(), request.getNumberOfPerson());;
     }
 }
