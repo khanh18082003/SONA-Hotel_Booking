@@ -1,6 +1,7 @@
 package com.kit.sonahotel_booking.dto.request;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,9 @@ public class UserCreationRequest extends GeneralDtoRequest {
   String lastName;
   @Size(min = 10, max = 11, message = "SIZE_PHONE")
   String phoneNumber;
+  @Size(min = 12, max = 12, message = "SIZE_CCCD")
+  String cccd;
   boolean gender;
   LocalDate dob;
+  LocalDate hireDate;
 }

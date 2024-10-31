@@ -1,15 +1,15 @@
 package com.kit.sonahotel_booking.Service.impl;
 
 import com.kit.sonahotel_booking.Entity.Account;
-import com.kit.sonahotel_booking.Entity.Customer;
+import com.kit.sonahotel_booking.Entity.Staff;
 import com.kit.sonahotel_booking.Exception.AppException;
 import com.kit.sonahotel_booking.Exception.ErrorCode;
 import com.kit.sonahotel_booking.Mapper.AccountMapper;
 import com.kit.sonahotel_booking.Mapper.UserMapper;
 import com.kit.sonahotel_booking.Repository.AccountRepository;
-import com.kit.sonahotel_booking.Repository.CustomerRepository;
 import com.kit.sonahotel_booking.Repository.RoleRepository;
-import com.kit.sonahotel_booking.Service.ICustomerService;
+import com.kit.sonahotel_booking.Repository.StaffRepository;
+import com.kit.sonahotel_booking.Service.IStaffService;
 import com.kit.sonahotel_booking.dto.request.GeneralDtoRequest;
 import com.kit.sonahotel_booking.dto.request.UserCreationRequest;
 import com.kit.sonahotel_booking.dto.request.UserUpdateRequest;
@@ -19,7 +19,6 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,13 +32,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Transactional
-public class CustomerServiceImpl implements ICustomerService {
+public class StaffServiceImpl implements IStaffService {
 
-  CustomerRepository customerRepository;
-  AccountRepository accountRepository;
   PasswordEncoder passwordEncoder;
-  UserMapper userMapper;
+  StaffRepository staffRepository;
+  AccountRepository accountRepository;
   AccountMapper accountMapper;
+  UserMapper userMapper;
   RoleRepository roleRepository;
 
   @Override
@@ -48,22 +47,22 @@ public class CustomerServiceImpl implements ICustomerService {
     if (accountRepository.existsByEmail(userCreationRequest.getEmail())) {
       throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
-    if (customerRepository.existsByPhoneNumber(userCreationRequest.getPhoneNumber())) {
+    if (staffRepository.existsByPhoneNumber(userCreationRequest.getPhoneNumber())) {
       throw new AppException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
     }
 
     Account account = accountMapper.toAccount(userCreationRequest);
+    var roles = roleRepository.findAllByRoleName(List.of(Roles.STAFF.name()));
     account.setPassword(passwordEncoder.encode(userCreationRequest.getPassword()));
     account.setActivated(true);
     account.setCreatedAt(LocalDate.now());
-    var roles = roleRepository.findAllByRoleName(List.of(Roles.CUSTOMER.name()));
     account.setRoles(new HashSet<>(roles));
     accountRepository.save(account);
 
-    Customer customer = userMapper.toCustomer(userCreationRequest);
-    customer.setAccount(account);
-    UserResponse userResponse = userMapper.fromCustomertoUserResponse(
-        customerRepository.save(customer));
+    Staff staff = userMapper.toStaff(userCreationRequest);
+    staff.setAccount(account);
+    staff.setStatus(true);
+    UserResponse userResponse = userMapper.fromStafftoUserResponse(staffRepository.save(staff));
     userResponse.setAccountId(account.getAccountId());
     userResponse.setEmail(account.getEmail());
     userResponse.setStatus(account.isActivated());
@@ -77,53 +76,53 @@ public class CustomerServiceImpl implements ICustomerService {
   public UserResponse update(GeneralDtoRequest request, String accountId) {
     UserUpdateRequest userUpdateRequest = (UserUpdateRequest) request;
 
-    Customer customer = customerRepository.findByAccountId(accountId)
-        .orElseThrow(() -> new AppException((ErrorCode.USER_NOT_FOUND)));
+    Staff staff = staffRepository.findByAccountId(accountId)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-    userMapper.updateCustomer(userUpdateRequest, customer);
-    customerRepository.save(customer);
+    userMapper.updateStaff(userUpdateRequest, staff);
+    staffRepository.save(staff);
 
-    UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
-    userResponse.setAccountId(customer.getAccount().getAccountId());
-    userResponse.setEmail(customer.getAccount().getEmail());
-    userResponse.setStatus(customer.getAccount().isActivated());
+    UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
+    userResponse.setAccountId(staff.getAccount().getAccountId());
+    userResponse.setEmail(staff.getAccount().getEmail());
+    userResponse.setStatus(staff.getAccount().isActivated());
     return userResponse;
   }
 
-  @PostAuthorize("returnObject.email == authentication.name")
   @Override
   public void delete(String accountId) {
-    Customer customer = customerRepository.findByAccountId(accountId)
+    Staff staff = staffRepository.findByAccountId(accountId)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-    Account account = customer.getAccount();
+    Account account = staff.getAccount();
+    staff.setStatus(false);
     account.setActivated(false);
   }
 
   @PostAuthorize("hasRole('ADMIN') or returnObject.email == authentication.name")
   @Override
-  public UserResponse get(String accountId) {
-    Customer customer = customerRepository.findByAccountId(accountId)
+  public UserResponse get(String userId) {
+    Staff staff = staffRepository.findByAccountId(userId)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-    UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
-    userResponse.setAccountId(customer.getAccount().getAccountId());
-    userResponse.setEmail(customer.getAccount().getEmail());
-    userResponse.setStatus(customer.getAccount().isActivated());
-    userResponse.setRoles(customer.getAccount().getRoles());
-    userResponse.setCreatedAt(customer.getAccount().getCreatedAt());
+    UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
+    userResponse.setAccountId(staff.getAccount().getAccountId());
+    userResponse.setCreatedAt(staff.getAccount().getCreatedAt());
+    userResponse.setEmail(staff.getAccount().getEmail());
+    userResponse.setStatus(staff.getAccount().isActivated());
+    userResponse.setRoles(staff.getAccount().getRoles());
     return userResponse;
   }
 
   @PreAuthorize("hasRole('ADMIN')")
   @Override
   public List<UserResponse> getAll() {
-    return customerRepository.findAll().stream().map(
-        customer -> {
-          UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
-          userResponse.setAccountId(customer.getAccount().getAccountId());
-          userResponse.setEmail(customer.getAccount().getEmail());
-          userResponse.setStatus(customer.getAccount().isActivated());
-          userResponse.setCreatedAt(customer.getAccount().getCreatedAt());
-          userResponse.setRoles(customer.getAccount().getRoles());
+    return staffRepository.findAll().stream().map(
+        staff -> {
+          UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
+          userResponse.setAccountId(staff.getAccount().getAccountId());
+          userResponse.setCreatedAt(staff.getAccount().getCreatedAt());
+          userResponse.setEmail(staff.getAccount().getEmail());
+          userResponse.setStatus(staff.getAccount().isActivated());
+          userResponse.setRoles(staff.getAccount().getRoles());
           return userResponse;
         }
     ).toList();
@@ -132,22 +131,19 @@ public class CustomerServiceImpl implements ICustomerService {
   @Override
   public UserResponse getMyInfo() {
     var authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (Objects.isNull(authentication)) {
-      return null;
-    }
-    String name = authentication.getName();
-    Account account = accountRepository.findByEmail(name)
+    String email = authentication.getName();
+    Account account = accountRepository.findByEmail(email)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-    Customer customer = customerRepository.findByAccountId(account.getAccountId())
+    Staff staff = staffRepository.findByAccountId(account.getAccountId())
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-    UserResponse userResponse = userMapper.fromCustomertoUserResponse(customer);
-    userResponse.setAccountId(customer.getAccount().getAccountId());
-    userResponse.setEmail(customer.getAccount().getEmail());
-    userResponse.setStatus(customer.getAccount().isActivated());
-    userResponse.setRoles(customer.getAccount().getRoles());
-    userResponse.setCreatedAt(customer.getAccount().getCreatedAt());
+    UserResponse userResponse = userMapper.fromStafftoUserResponse(staff);
+    userResponse.setAccountId(staff.getAccount().getAccountId());
+    userResponse.setCreatedAt(staff.getAccount().getCreatedAt());
+    userResponse.setEmail(staff.getAccount().getEmail());
+    userResponse.setStatus(staff.getAccount().isActivated());
+    userResponse.setRoles(staff.getAccount().getRoles());
 
     return userResponse;
   }
